@@ -50,14 +50,14 @@ abstract class AbstractBaseParser implements ParserInterface
         /** @var PreviewNewsDTO $newsPostDTO */
         foreach ($previewList as $key => $newsPostDTO) {
             $newsList[] = $this->parseNewsPage($newsPostDTO);
-            $this->nodeStorage->removeAll($this->nodeStorage);
+            $this->getNodeStorage()->removeAll($this->getNodeStorage());
 
-            if ($key % $this->pageCountBetweenDelay === 0) {
-                usleep($this->microsecondsDelay);
+            if ($key % $this->getPageCountBetweenDelay() === 0) {
+                usleep($this->getMicrosecondsDelay());
             }
         }
 
-        $this->curl->reset();
+        $this->getCurl()->reset();
         return $newsList;
     }
 
@@ -262,7 +262,7 @@ abstract class AbstractBaseParser implements ParserInterface
             $parentNode = $this->getRecursivelyParentNode($node, function (DOMNode $parentNode) {
                 $isQuote = $this->isQuoteType($parentNode);
 
-                if ($this->rootContentNodeStorage->contains($parentNode) && !$isQuote) {
+                if ($this->getRootContentNodeStorage()->contains($parentNode) && !$isQuote) {
                     return null;
                 }
 
@@ -275,13 +275,13 @@ abstract class AbstractBaseParser implements ParserInterface
             return null;
         }
 
-        if ($this->nodeStorage->contains($node)) {
+        if ($this->getNodeStorage()->contains($node)) {
             throw new RuntimeException('Тег уже сохранен');
         }
 
         $newsPostItem = NewsPostItemDTO::createQuoteItem($this->normalizeText($node->textContent));
 
-        $this->nodeStorage->attach($node, $newsPostItem);
+        $this->getNodeStorage()->attach($node, $newsPostItem);
         $this->removeParentsFromStorage($node->parentNode);
 
         return $newsPostItem;
@@ -293,7 +293,7 @@ abstract class AbstractBaseParser implements ParserInterface
             $parentNode = $this->getRecursivelyParentNode($node, function (DOMNode $parentNode) {
                 $isHeading = $this->getHeadingLevel($parentNode) !== null;
 
-                if ($this->rootContentNodeStorage->contains($parentNode) && !$isHeading) {
+                if ($this->getRootContentNodeStorage()->contains($parentNode) && !$isHeading) {
                     return null;
                 }
 
@@ -308,13 +308,13 @@ abstract class AbstractBaseParser implements ParserInterface
             return null;
         }
 
-        if ($this->nodeStorage->contains($node)) {
+        if ($this->getNodeStorage()->contains($node)) {
             throw new RuntimeException('Тег уже сохранен');
         }
 
         $newsPostItem = NewsPostItemDTO::createHeaderItem($this->normalizeText($node->textContent), $headingLevel);
 
-        $this->nodeStorage->attach($node, $newsPostItem);
+        $this->getNodeStorage()->attach($node, $newsPostItem);
         $this->removeParentsFromStorage($node->parentNode);
 
         return $newsPostItem;
@@ -330,7 +330,7 @@ abstract class AbstractBaseParser implements ParserInterface
             $parentNode = $this->getRecursivelyParentNode($node, function (DOMNode $parentNode) {
                 $isLink = $this->isLink($parentNode);
 
-                if ($this->rootContentNodeStorage->contains($parentNode) && !$isLink) {
+                if ($this->getRootContentNodeStorage()->contains($parentNode) && !$isLink) {
                     return null;
                 }
 
@@ -349,7 +349,7 @@ abstract class AbstractBaseParser implements ParserInterface
             return null;
         }
 
-        if ($this->nodeStorage->contains($node)) {
+        if ($this->getNodeStorage()->contains($node)) {
             throw new RuntimeException('Тег уже сохранен');
         }
 
@@ -361,7 +361,7 @@ abstract class AbstractBaseParser implements ParserInterface
 
         $newsPostItem = NewsPostItemDTO::createLinkItem($link, $linkText);
 
-        $this->nodeStorage->attach($node, $newsPostItem);
+        $this->getNodeStorage()->attach($node, $newsPostItem);
         $this->removeParentsFromStorage($node->parentNode);
 
         return $newsPostItem;
@@ -373,7 +373,7 @@ abstract class AbstractBaseParser implements ParserInterface
             $parentNode = $this->getRecursivelyParentNode($node, function (DOMNode $parentNode) {
                 $isIframe = $parentNode->nodeName === 'iframe';
 
-                if ($this->rootContentNodeStorage->contains($parentNode) && !$isIframe) {
+                if ($this->getRootContentNodeStorage()->contains($parentNode) && !$isIframe) {
                     return null;
                 }
 
@@ -386,7 +386,7 @@ abstract class AbstractBaseParser implements ParserInterface
             return null;
         }
 
-        if ($this->nodeStorage->contains($node)) {
+        if ($this->getNodeStorage()->contains($node)) {
             throw new RuntimeException('Тег уже сохранен');
         }
 
@@ -395,7 +395,7 @@ abstract class AbstractBaseParser implements ParserInterface
             return null;
         }
         $newsPostItem = NewsPostItemDTO::createVideoItem($youtubeVideoId);
-        $this->nodeStorage->attach($node, $newsPostItem);
+        $this->getNodeStorage()->attach($node, $newsPostItem);
 
         return $newsPostItem;
     }
@@ -411,7 +411,7 @@ abstract class AbstractBaseParser implements ParserInterface
         $imageLink = $node->getAttribute('src');
 
         if ($isPicture) {
-            if ($this->nodeStorage->contains($node->parentNode)) {
+            if ($this->getNodeStorage()->contains($node->parentNode)) {
                 throw new RuntimeException('Тег уже сохранен');
             }
 
@@ -438,7 +438,7 @@ abstract class AbstractBaseParser implements ParserInterface
         $newsPostItem = NewsPostItemDTO::createImageItem($imageLink, $alt);
 
         if ($isPicture) {
-            $this->nodeStorage->attach($node->parentNode, $newsPostItem);
+            $this->getNodeStorage()->attach($node->parentNode, $newsPostItem);
         }
 
         return $newsPostItem;
@@ -456,7 +456,7 @@ abstract class AbstractBaseParser implements ParserInterface
             $parentNode = $this->getRecursivelyParentNode($node, function (DOMNode $parentNode) {
                 $isFormattingTag = $this->isFormattingTag($parentNode);
 
-                if ($this->rootContentNodeStorage->contains($parentNode)) {
+                if ($this->getRootContentNodeStorage()->contains($parentNode) && !$isFormattingTag) {
                     return null;
                 }
 
@@ -474,9 +474,9 @@ abstract class AbstractBaseParser implements ParserInterface
             $attachNode = $attachNode->parentNode;
         }
 
-        if ($this->nodeStorage->contains($attachNode)) {
+        if ($this->getNodeStorage()->contains($attachNode)) {
             /** @var NewsPostItemDTO $parentNewsPostItem */
-            $parentNewsPostItem = $this->nodeStorage->offsetGet($attachNode);
+            $parentNewsPostItem = $this->getNodeStorage()->offsetGet($attachNode);
             $parentNewsPostItem->addText($this->normalizeText($node->textContent));
 
             throw new RuntimeException('Контент добавлен к существующему объекту NewsPostItemDTO');
@@ -488,7 +488,7 @@ abstract class AbstractBaseParser implements ParserInterface
 
         $newsPostItem = NewsPostItemDTO::createTextItem($this->normalizeText($node->textContent));
 
-        $this->nodeStorage->attach($attachNode, $newsPostItem);
+        $this->getNodeStorage()->attach($attachNode, $newsPostItem);
 
         return $newsPostItem;
     }
@@ -507,15 +507,15 @@ abstract class AbstractBaseParser implements ParserInterface
             $exceptNewsPostItemTypes = [NewsPostItem::TYPE_HEADER, NewsPostItem::TYPE_QUOTE, NewsPostItem::TYPE_LINK];
         }
 
-        if ($this->nodeStorage->contains($node)) {
+        if ($this->getNodeStorage()->contains($node)) {
             /** @var NewsPostItemDTO $newsPostItem */
-            $newsPostItem = $this->nodeStorage->offsetGet($node);
+            $newsPostItem = $this->getNodeStorage()->offsetGet($node);
 
             if (in_array($newsPostItem->getType(), $exceptNewsPostItemTypes, true)) {
                 return;
             }
 
-            $this->nodeStorage->detach($node);
+            $this->getNodeStorage()->detach($node);
             return;
         }
 
@@ -544,8 +544,8 @@ abstract class AbstractBaseParser implements ParserInterface
     protected function getJsonContent(string $uri): array
     {
         $encodedUri = Helper::encodeUrl($uri);
-        $result = $this->curl->get($encodedUri, false);
-        $this->checkResponseCode($this->curl);
+        $result = $this->getCurl()->get($encodedUri, false);
+        $this->checkResponseCode($this->getCurl());
 
         return $result;
     }
@@ -554,8 +554,8 @@ abstract class AbstractBaseParser implements ParserInterface
     protected function getPageContent(string $uri): string
     {
         $encodedUri = Helper::encodeUrl($uri);
-        $content = $this->curl->get($encodedUri);
-        $this->checkResponseCode($this->curl);
+        $content = $this->getCurl()->get($encodedUri);
+        $this->checkResponseCode($this->getCurl());
 
         return $this->decodeGZip($content);
     }
@@ -661,9 +661,9 @@ abstract class AbstractBaseParser implements ParserInterface
 
     protected function setRootNodes(Crawler $contentCrawler): void
     {
-        $this->rootContentNodeStorage->removeAll($this->rootContentNodeStorage);
+        $this->getRootContentNodeStorage()->removeAll($this->getRootContentNodeStorage());
         foreach ($contentCrawler as $rootNode) {
-            $this->rootContentNodeStorage->attach($rootNode);
+            $this->getRootContentNodeStorage()->attach($rootNode);
         }
     }
 
