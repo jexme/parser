@@ -408,7 +408,7 @@ abstract class AbstractBaseParser implements ParserInterface
             return null;
         }
 
-        $imageLink = $node->getAttribute('src');
+        $imageLink = $this->getImageLinkFromNode($node);
 
         if ($isPicture) {
             if ($this->getNodeStorage()->contains($node->parentNode)) {
@@ -747,6 +747,11 @@ abstract class AbstractBaseParser implements ParserInterface
     protected function getRootContentNodeStorage(): SplObjectStorage
     {
         return $this->rootContentNodeStorage;
+    }
+
+    protected function getImageLinkFromNode(DOMElement $node): string
+    {
+        return $node->getAttribute('src');
     }
 
 }
