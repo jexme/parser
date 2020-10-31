@@ -76,6 +76,8 @@ class StavropolyeTvParser extends AbstractBaseParser
 
         $contentCrawler = $newsPageCrawler->filter('#content .block-text-text');
         $this->removeDomNodes($contentCrawler, '//div[contains(@class,"block-text-share-ya-news")]');
+        $this->removeDomNodes($contentCrawler, '//*[contains(text(),"Новости по теме:")]/following-sibling::*');
+        $this->removeDomNodes($contentCrawler, '//*[contains(text(),"Новости по теме:")]');
 
         if (!$previewNewsDTO->getImage()) {
             $image = null;
